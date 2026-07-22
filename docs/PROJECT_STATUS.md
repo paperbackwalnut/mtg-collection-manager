@@ -68,8 +68,8 @@ Latest validation on July 22, 2026:
 - Review the intended public file set one final time before creating repository history.
 - Do not include real databases, collection exports, backups, environment files, build output, or
   dependency directories.
-- The local Git repository is initialized on `main`; the initial commit and public remote remain
-  intentionally pending until the owner approves publication.
+- The public repository is available at
+  `https://github.com/paperbackwalnut/mtg-collection-manager`, with `main` as its default branch.
 
 ## Maintenance posture
 
