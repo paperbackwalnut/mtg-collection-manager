@@ -1,0 +1,74 @@
+# dependencies
+node_modules/
+.pnpm-store/
+.agents/
+
+# build output
+.svelte-kit/
+build/
+dist/
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Drizzle
+drizzle/*.sqlite
+drizzle/*.db
+drizzle/*.db-journal
+
+# Local SQLite databases
+*.sqlite
+*.sqlite3
+*.db
+# WAL/SHM sidecar files (never commit these)
+*.db-shm
+*.db-wal
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Vite
+vite.config.ts.timestamp-*
+
+# Docker
+docker-data/
+
+# Misc
+.cache/
+temp/
+.tmp/
+
+# Scryfall bulk data (downloaded locally to avoid rate limits — do not commit)
+scryfall-bulk.json
+scryfall-bulk.json.download
+# Local database backups
+backups/
+*.backup
+*.dump
+
+# User-generated collection/deck exports
+exports/
+*.csv
+*.tsv
