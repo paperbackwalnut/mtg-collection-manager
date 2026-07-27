@@ -6,7 +6,7 @@
 	let { card }: { card: ManagerCard } = $props();
 	const ctx = getContext<ManagerCtx>('manager');
 
-	const total = $derived(card.assignments.length);
+	const total = $derived(card.quantity);
 	const initialPulled = untrack(() => card.assignments.filter((a) => a.pulled).length);
 	let pulled = $state(initialPulled);
 	let inputVal = $state(String(initialPulled));

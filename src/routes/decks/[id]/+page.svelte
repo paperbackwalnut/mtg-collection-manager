@@ -146,7 +146,11 @@
 		printStatus?: string | null;
 		proxyInventoryId?: number | null;
 	};
+	type DeckCardPatch = {
+		quantity?: number;
+	};
 	let localPatches = $state(new Map<number, Patch>());
+	let deckCardPatches = $state(new Map<number, DeckCardPatch>());
 
 	function applyPatch(id: number, patch: Patch) {
 		const m = new Map(localPatches);
@@ -160,18 +164,30 @@
 		localPatches = m;
 	}
 
+	function applyDeckCardPatch(id: number, patch: DeckCardPatch) {
+		const m = new Map(deckCardPatches);
+		m.set(id, { ...m.get(id), ...patch });
+		deckCardPatches = m;
+	}
+
 	// data.boards + localPatches merged — feeds statMap and displayBoards
 	const patchedBoards = $derived.by(() => {
-		if (localPatches.size === 0) return data.boards;
+		if (localPatches.size === 0 && deckCardPatches.size === 0) return data.boards;
 		const result: typeof data.boards = {};
 		for (const [board, cards] of Object.entries(data.boards)) {
-			result[board] = (cards ?? []).map((card) => ({
-				...card,
-				assignments: card.assignments.map((a) => {
-					const p = localPatches.get(a.id);
-					return p ? { ...a, ...p } : a;
+			result[board] = (cards ?? [])
+				.map((card) => {
+					const cardPatch = deckCardPatches.get(card.dcId);
+					return {
+						...card,
+						...(cardPatch?.quantity !== undefined ? { quantity: cardPatch.quantity } : {}),
+						assignments: card.assignments.map((a) => {
+							const p = localPatches.get(a.id);
+							return p ? { ...a, ...p } : a;
+						})
+					};
 				})
-			}));
+				.filter((card) => card.quantity > 0);
 		}
 		return result;
 	});
@@ -681,6 +697,11 @@
 			if (!response.ok) {
 				deckMutationError = result.error ?? 'Could not update this card.';
 				return false;
+			}
+			if (result?.result) {
+				applyDeckCardPatch(deckCardId, {
+					...(typeof result.result.quantity === 'number' ? { quantity: result.result.quantity } : {})
+				});
 			}
 			deckMutationMessage = 'Deck list updated.';
 			await invalidateAll();
