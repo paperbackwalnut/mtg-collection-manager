@@ -12,6 +12,7 @@
 		sortKey,
 		type BucketConfig
 	} from '$lib/bucket-config';
+	import { isLandOnlyTypeLine } from '$lib/card-classification';
 
 	let { data }: { data: PageData } = $props();
 
@@ -445,7 +446,7 @@
 		return /\bBasic\b/.test(typeLine) && /\bLand\b/.test(typeLine);
 	}
 	function isLand(typeLine: string) {
-		return /\bLand\b/.test(typeLine);
+		return isLandOnlyTypeLine(typeLine);
 	}
 
 	function itemMatchesColorFilter(item: { colors: string; typeLine: string }): boolean {

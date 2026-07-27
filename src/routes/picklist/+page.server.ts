@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/server/db/index';
 import { decks, deckCards, cardAssignments, collection } from '$lib/server/db/schema';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
-import { computeLocation, getTypeOrder } from '$lib/server/location';
+import { computeLocation, getCardColors, getTypeOrder } from '$lib/server/location';
 import { LOCATION_ORDER } from '$lib/types';
 import type { CardLocation, PickListItem } from '$lib/types';
 import { getByIds, getByName as scryfallByName } from '$lib/server/db/scryfall-sqlite';
@@ -84,11 +84,6 @@ export const load: PageServerLoad = async ({ url }) => {
 		}
 	}
 
-	function extractColors(manaCost: string | null | undefined): string {
-		if (!manaCost) return '';
-		return ['W', 'U', 'B', 'R', 'G'].filter((c) => manaCost.includes(`{${c}}`)).join('');
-	}
-
 	const items: PickListItem[] = [];
 
 	for (const row of rows) {
@@ -102,6 +97,8 @@ export const load: PageServerLoad = async ({ url }) => {
 			: (nameLookups.get(row.cardName) ?? undefined);
 		const nameSc = nameLookups.get(row.cardName);
 		const typeLine = nameSc?.type_line || cardSc?.type_line || '';
+		const manaCost = cardSc?.mana_cost ?? nameSc?.mana_cost;
+		const colorIdentity = cardSc?.color_identity ?? nameSc?.color_identity;
 
 		let location: CardLocation = 'unknown';
 		if (row.status === 'proxied') {
@@ -111,7 +108,9 @@ export const load: PageServerLoad = async ({ url }) => {
 				typeLine,
 				cardSc.mana_cost,
 				cardSc.price_usd,
-				row.collLocationOverride
+				row.collLocationOverride,
+				10,
+				colorIdentity
 			);
 		}
 
@@ -126,7 +125,7 @@ export const load: PageServerLoad = async ({ url }) => {
 			typeOrder: getTypeOrder(typeLine),
 			cmc: cardSc?.cmc ?? nameSc?.cmc ?? 0,
 			typeLine,
-			colors: extractColors(cardSc?.mana_cost ?? nameSc?.mana_cost),
+			colors: [...getCardColors(colorIdentity, manaCost)].join(''),
 			imageUri: cardSc?.image_uri ?? null,
 			priceUsd: cardSc?.price_usd ?? null,
 			deckId: row.deckId,

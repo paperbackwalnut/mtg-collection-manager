@@ -80,7 +80,7 @@ export interface PickListItem {
 	typeOrder: number;
 	cmc: number;
 	typeLine: string;
-	colors: string; // e.g. "WUB" — the WUBRG letters present in the mana cost
+	colors: string; // e.g. "WUB" — cached color identity, or mana-cost colors as a fallback
 	imageUri: string | null;
 	priceUsd: number | null;
 	deckId: number;

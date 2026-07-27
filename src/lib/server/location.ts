@@ -1,4 +1,5 @@
 import type { CardLocation } from '../types';
+import { isLandOnlyTypeLine } from '../card-classification';
 
 export function extractColorPipsFromManaCost(manaCost: string): Set<string> {
 	if (!manaCost) return new Set();
@@ -26,6 +27,30 @@ export function extractColorPipsFromManaCost(manaCost: string): Set<string> {
 	return colors;
 }
 
+/** Prefer cached Scryfall color identity, falling back to mana-cost pips when unavailable. */
+export function getCardColors(
+	colorIdentity: string | null | undefined,
+	manaCost: string | null | undefined
+): Set<string> {
+	if (colorIdentity != null) {
+		try {
+			const parsed: unknown = JSON.parse(colorIdentity);
+			if (Array.isArray(parsed)) {
+				return new Set(
+					parsed.filter(
+						(color): color is string =>
+							typeof color === 'string' && ['W', 'U', 'B', 'R', 'G'].includes(color)
+					)
+				);
+			}
+		} catch {
+			// An old or malformed cache value should not prevent mana-cost fallback.
+		}
+	}
+
+	return extractColorPipsFromManaCost(manaCost ?? '');
+}
+
 const COLOR_TO_LOCATION: Record<string, CardLocation> = {
 	W: 'box_w',
 	U: 'box_u',
@@ -39,7 +64,8 @@ export function computeLocation(
 	manaCost: string | null | undefined,
 	priceUsd: number | null | undefined,
 	locationOverride: string | null | undefined,
-	priceBinderThreshold = 10
+	priceBinderThreshold = 10,
+	colorIdentity?: string | null
 ): CardLocation {
 	// Manual override takes absolute precedence
 	if (locationOverride) return locationOverride as CardLocation;
@@ -50,10 +76,10 @@ export function computeLocation(
 	if (priceUsd != null && priceUsd >= priceBinderThreshold) return 'binder';
 
 	// Land check (before color pip check — lands have no mana cost)
-	if (typeLine && typeLine.toLowerCase().includes('land')) return 'box_land';
+	if (isLandOnlyTypeLine(typeLine)) return 'box_land';
 
-	// Color pips in mana cost
-	const pips = extractColorPipsFromManaCost(manaCost ?? '');
+	// Cached Scryfall color identity, with mana-cost pips as a legacy fallback
+	const pips = getCardColors(colorIdentity, manaCost);
 	if (pips.size === 0) return 'box_colorless';
 	if (pips.size === 1) {
 		const [c] = pips;
@@ -84,7 +110,7 @@ export function getTypeOrder(typeLine: string): number {
 	// Artifact after equipment/vehicle guard above
 	if (t.includes('artifact')) return 6;
 
-	if (t.includes('land')) return 9;
+	if (isLandOnlyTypeLine(typeLine)) return 9;
 
 	return 10;
 }

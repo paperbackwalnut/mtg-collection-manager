@@ -1,3 +1,5 @@
+import { isLandOnlyTypeLine } from './card-classification';
+
 /**
  * Card storage bucket configuration.
  *
@@ -208,7 +210,7 @@ export function parseBucketRange(value: string): CmcBucket[] {
 
 /** Derive the color key from a card's colors string ('W', 'WU', '', etc.). */
 export function getColorKey(colors: string, typeLine: string): ColorKey | 'land' {
-	if (typeLine.toLowerCase().includes('land')) return 'land';
+	if (isLandOnlyTypeLine(typeLine)) return 'land';
 	if (colors.length === 0) return 'C';
 	if (colors.length === 1) return colors as ColorKey;
 	return 'M';
@@ -217,10 +219,11 @@ export function getColorKey(colors: string, typeLine: string): ColorKey | 'land'
 /** Derive the bucket type key from a Scryfall type line. */
 export function getTypeKey(typeLine: string): BucketTypeKey | null {
 	const tl = typeLine.toLowerCase();
-	if (tl.includes('land')) return null; // handled separately
+	if (isLandOnlyTypeLine(typeLine)) return null; // handled separately
 	if (tl.includes('equipment')) return 'Equipment';
 	if (tl.includes('vehicle')) return 'Vehicle';
 	if (tl.includes('aura')) return 'Aura';
+	// Creature precedes generic artifact so Artifact Creature stays with creatures.
 	if (tl.includes('creature')) return 'Creature';
 	if (tl.includes('planeswalker')) return 'Planeswalker';
 	if (tl.includes('enchantment')) {
